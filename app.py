@@ -1,15 +1,9 @@
+import os
 import gradio as gr
 import requests
 import asyncio
 import threading
 from telethon import TelegramClient, events
-
-# Import spaces for Hugging Face ZeroGPU compatibility
-try:
-    import spaces
-    has_spaces = True
-except ImportError:
-    has_spaces = False
 
 # --- CONFIGURATION ---
 API_ID = 33956030
@@ -91,38 +85,29 @@ async def catch_up_recent():
     except Exception as e:
         print("Error in catch up scan:", e)
 
-# Function to run Telethon client in a background thread
+# Function to run Telethon client safely without EOF prompt
 def start_userbot():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    print("Userbot is starting...")
-    client.start()
+    print("Connecting userbot to Telegram...")
+    loop.run_until_complete(client.connect())
     
-    # Run catch-up scan in background
+    if not loop.run_until_complete(client.is_user_authorized()):
+        print("ERROR: Userbot is not authorized! Session file might be missing or invalid.")
+        return
+        
+    print("Userbot connected and authorized successfully!")
     loop.create_task(catch_up_recent())
-    
-    print("Userbot is running and listening to all groups...")
     client.run_until_disconnected()
-
-# Dummy GPU function for Hugging Face compatibility
-if has_spaces:
-    @spaces.GPU
-    def dummy_gpu_task():
-        return "GPU check passed"
-else:
-    def dummy_gpu_task():
-        return "No GPU required"
 
 # Start userbot in background thread
 threading.Thread(target=start_userbot, daemon=True).start()
 
-# Launch a simple Gradio Web Page
+# Launch Gradio web server on port required by Render
+port = int(os.environ.get("PORT", 10000))
+
 with gr.Blocks(title="AutoSum Userbot") as demo:
     gr.Markdown("# 📊 AutoSum Telegram Userbot")
-    gr.Markdown("This userbot is running 24/7 in the cloud and listening for transaction messages.")
-    
-    btn = gr.Button("Verify Cloud Connection")
-    out = gr.Textbox(label="Status")
-    btn.click(fn=dummy_gpu_task, outputs=out)
+    gr.Markdown("This userbot is running 24/7 on Render and listening for transaction messages.")
 
-demo.launch(server_name="0.0.0.0", server_port=7860)
+demo.launch(server_name="0.0.0.0", server_port=port)
