@@ -4,13 +4,15 @@ import requests
 import asyncio
 import threading
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 
 # --- CONFIGURATION ---
 API_ID = 33956030
 API_HASH = "86796851bec72ad4da9a9c627c416b68"
+STRING_SESSION = "1BVtsOKABuzgvk5bHypvlX2LHkDegcs0_k5PT5j5tliaPbHxNAEe0RcaxcUh3iAH-Uni4s534XAnnlYIiPQt7IU3VQZS4OQCrmqqOAHA6FAZsfXd6_m9Qx58xFCuJf7y58qr7aB6koKK6QmfTRQ_rGn6YKBd2yQ06koJ2w-ZCeNJdMm6ebZD14kr5wVwSUe1vQFlFOHnIS67Ne8_u-mYB8LEDC1BzE_JJA4dECU8mmi_yBQ-bY5tfWeDQwxyDtbV893Q20rdVGps1M41Nvm9PMRqjmk99UJsKH4sjoyHt5L0ZqWO38LKPoy6m7UcJB9NlhvLumTkX4EoCfZGRi-Cw5_klvTiZKbM="
 WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxWVKVElwwYv1xhY5y9XfWAJN6nN2vBFstaNldZdU1F0IgOB1UOFk_i2Xe2zjjJEvjvEQ/exec"
 
-client = TelegramClient('autosum_session', API_ID, API_HASH)
+client = TelegramClient(StringSession(STRING_SESSION), API_ID, API_HASH)
 
 def is_transaction_message(text):
     if not text:
@@ -89,11 +91,11 @@ async def catch_up_recent():
 def start_userbot():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    print("Connecting userbot to Telegram...")
+    print("Connecting userbot to Telegram via StringSession...")
     loop.run_until_complete(client.connect())
     
     if not loop.run_until_complete(client.is_user_authorized()):
-        print("ERROR: Userbot is not authorized! Session file might be missing or invalid.")
+        print("ERROR: Userbot is not authorized!")
         return
         
     print("Userbot connected and authorized successfully!")
