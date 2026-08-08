@@ -62,7 +62,6 @@ async def process_and_send(chat_id, message_id, timestamp, text, sender):
 
 @client.on(events.NewMessage)
 async def handler(event):
-    # Process both normal groups AND supergroups/channels (only ignore private 1-on-1 DMs)
     if event.is_private:
         return
         
@@ -75,12 +74,12 @@ async def handler(event):
         await process_and_send(event.chat_id, event.message.id, event.message.date.timestamp(), text, sender)
 
 async def catch_up_recent():
-    await asyncio.sleep(5)  # Wait for connection stabilization
-    print("Scanning recent history in groups and supergroups for missed transactions...")
+    await asyncio.sleep(3)
+    print("Checking 20 recent messages for any missed live notifications...")
     try:
         async for dialog in client.iter_dialogs():
             if dialog.is_group or dialog.is_channel:
-                async for msg in client.iter_messages(dialog.id, limit=100):
+                async for msg in client.iter_messages(dialog.id, limit=20):
                     text = msg.text or msg.message
                     if is_transaction_message(text):
                         sender = await msg.get_sender()
@@ -88,7 +87,6 @@ async def catch_up_recent():
     except Exception as e:
         print("Error in catch up scan:", e)
 
-# Function to run Telethon client safely without EOF prompt
 def start_userbot():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -103,10 +101,8 @@ def start_userbot():
     loop.create_task(catch_up_recent())
     client.run_until_disconnected()
 
-# Start userbot in background thread
 threading.Thread(target=start_userbot, daemon=True).start()
 
-# Launch Gradio web server on port required by Render
 port = int(os.environ.get("PORT", 10000))
 
 with gr.Blocks(title="AutoSum Userbot") as demo:
