@@ -62,7 +62,8 @@ async def process_and_send(chat_id, message_id, timestamp, text, sender):
 
 @client.on(events.NewMessage)
 async def handler(event):
-    if not event.is_group:
+    # Process both normal groups AND supergroups/channels (only ignore private 1-on-1 DMs)
+    if event.is_private:
         return
         
     text = event.message.text or event.message.message
@@ -75,10 +76,10 @@ async def handler(event):
 
 async def catch_up_recent():
     await asyncio.sleep(5)  # Wait for connection stabilization
-    print("Checking 100 recent history messages for missed transactions...")
+    print("Scanning recent history in groups and supergroups for missed transactions...")
     try:
         async for dialog in client.iter_dialogs():
-            if dialog.is_group:
+            if dialog.is_group or dialog.is_channel:
                 async for msg in client.iter_messages(dialog.id, limit=100):
                     text = msg.text or msg.message
                     if is_transaction_message(text):
