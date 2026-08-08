@@ -75,11 +75,11 @@ async def handler(event):
 
 async def catch_up_recent():
     await asyncio.sleep(5)  # Wait for connection stabilization
-    print("Checking recent history for missed transactions...")
+    print("Checking 100 recent history messages for missed transactions...")
     try:
         async for dialog in client.iter_dialogs():
             if dialog.is_group:
-                async for msg in client.iter_messages(dialog.id, limit=15):
+                async for msg in client.iter_messages(dialog.id, limit=100):
                     text = msg.text or msg.message
                     if is_transaction_message(text):
                         sender = await msg.get_sender()
